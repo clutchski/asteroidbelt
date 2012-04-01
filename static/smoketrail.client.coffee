@@ -42,13 +42,14 @@ class Keyboard extends InputDevice
             38 : InputDevice.THRUST     # Up
             37 : InputDevice.PORT       # Left
             39 : InputDevice.STARBOARD  # Right
-            83 : InputDevice.PORT       # Space
+            32 : InputDevice.FIRE       # Space
 
         # Listen for keypresses.
         @stop()
         $(document).bind 'keydown', (event) =>
             key = event.which or event.keyCode
             event = @events[key]
+            logger.debug("Pressed #{key}")
             @trigger(event) if event
 
     stop : () ->
@@ -123,7 +124,6 @@ class Plane extends wolf.Circle
     turn : (orientation) ->
         # HACK! Do rotational forces!
         magnitude = 20
-
         doTurn = () =>
             turn = 5
             if 0 < magnitude
@@ -132,8 +132,27 @@ class Plane extends wolf.Circle
                 @direction = @direction.rotate(degrees)
                 setTimeout(doTurn, 40)
             magnitude -= turn
-
         doTurn()
+
+    fire : () ->
+        position = @direction.scale(20).add(new wolf.Vector(@x, @y))
+        opts = {
+            x: position.x
+            y: position.y
+            direction: @direction.copy()
+        }
+        return new Bullet(opts)
+
+
+# Bullets kill things!
+class Bullet extends wolf.Circle
+
+    constructor : (opts={}) ->
+        opts.radius = 3
+        opts.speed = 1.5
+        opts.dragCoefficient = 0
+        opts.fillStyle = "white"
+        super(opts)
 
 
 
@@ -150,7 +169,6 @@ class Controller
         # Initialize event handlers.
         @_initializeSocketHandlers()
         @_initializeUserInputHandlers()
-        @_initializeUpdates()
 
     _initializeSocketHandlers : () ->
         logger.info("Initializing socket handlers")
@@ -183,6 +201,11 @@ class Controller
 
         @inputDevice.bind InputDevice.STARBOARD, =>
             @playerPlane.starboard()
+            @_update()
+
+        @inputDevice.bind InputDevice.FIRE, =>
+            bullet = @playerPlane.fire()
+            @engine.add(bullet)
             @_update()
 
     _update : () ->
