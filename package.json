@@ -1,0 +1,17 @@
+{
+    "name": "smoketrail"
+  , "version": "0.0.1"
+  , "private": true
+  , "dependencies": {
+      "express": "2.5.8"
+    , "socket.io": "0.9.3"
+    , "coffee-script": "1.2.0"
+  }
+  , "devDependencies" : {
+      "supervisor" : "0.3.0"
+    , "coffeelint": "0.3.0"
+  }
+  , "engines": {
+        "node": "0.6.6"
+  }
+}
