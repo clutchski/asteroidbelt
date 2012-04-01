@@ -143,6 +143,14 @@ class Plane extends wolf.Circle
         }
         return new Bullet(opts)
 
+    serialize : () ->
+        x: @x
+        y: @y
+        id: @id
+        radius: @radius
+        speed: @speed
+        fillStyle: @fillStyle
+        direction: @direction.toArray()
 
 # Bullets kill things!
 class Bullet extends wolf.Circle
@@ -154,7 +162,14 @@ class Bullet extends wolf.Circle
         opts.fillStyle = "white"
         super(opts)
 
-
+    serialize : () ->
+        x: @x
+        y: @y
+        id: @id
+        radius: @radius
+        speed: @speed
+        fillStyle: @fillStyle
+        direction: @direction.toArray()
 
 # The controller performs co-ordination between the user, the engine
 # and the network.
@@ -206,18 +221,11 @@ class Controller
         @inputDevice.bind InputDevice.FIRE, =>
             bullet = @playerPlane.fire()
             @engine.add(bullet)
-            @_update()
+            @socket.emit 'bullet.added', bullet
 
     _update : () ->
         return if not @playerPlane
-        data =
-            id: @playerPlane.id
-            x: @playerPlane.x
-            y: @playerPlane.y
-            speed: @playerPlane.speed
-            direction: [@playerPlane.direction.x, @playerPlane.direction.y]
-            color: @playerPlane.fillStyle
-        @socket.emit 'plane.update', data
+        @socket.emit 'plane.update', @playerPlane.serialize()
 
 
 # Start 'er up!

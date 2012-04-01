@@ -71,6 +71,13 @@ class World
     removePlane : (id) ->
         delete @planes[id]
 
+    # Serialize the world from the given player's perspective.
+    serialize : (id) ->
+        return {
+            planes : @planes
+            playerId: id
+        }
+
 world = new World()
 
 # Set-up the application logic.
@@ -79,17 +86,21 @@ io.sockets.on 'connection', (socket) ->
     # Create a plane for the user and let everybody else know.
     plane = world.createPlane(socket.id)
     socket.broadcast.emit('plane.added', plane)
-    socket.emit('world.update', {planes:world.planes, playerId:plane.id})
+    socket.emit('world.update', world.serialize(plane.id))
 
     socket.on 'plane.update', (data) ->
         data.id = socket.id
         world.updatePlane(data)
         socket.broadcast.emit('plane.update', data)
 
+    socket.on 'bullet.added', (data) ->
+        console.log "ADDED BULLET!"
+
     # Set-up a disconnct handler.
     socket.on 'disconnect', () ->
         world.removePlane socket.id
         socket.broadcast.emit('plane.removed', {id:socket.id})
+
 
 # Run the server.
 app.listen(8008)
