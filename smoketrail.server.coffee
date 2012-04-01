@@ -22,11 +22,19 @@ app.get '/', (req, res) ->
         <html>
             <head>
                 <title>Smoketrail</title>
+                <style type="text/css">
+                    body {
+                        background-color: #222;
+                    }
+
+                </style>
             </head>
             <body>
                 <canvas id="canvas" width="600" height="600"></canvas>
+
                 <script src="/socket.io/socket.io.js"></script>
                 <script src="/static/wolf.js"></script>
+
                 <script src="/static/smoketrail.client.js"></script>
             </body>
         </html>
@@ -38,6 +46,13 @@ class World
 
     constructor : () ->
         @planes = {}
+        @colors = ['blue', 'green', 'yellow', 'black', 'red', 'orange', 'pink']
+        @colorIndex = 0
+
+    getColor : () ->
+        @colorIndex = (@colorIndex + 1) % @colors.length
+        return @colors[@colorIndex]
+
 
     createPlane : (id) ->
         console.log ("Creating plane #{id}")
@@ -45,7 +60,7 @@ class World
             id: id
             x: Math.round(Math.random() * 100)
             y: Math.round(Math.random() * 100)
-            color: 'blue'
+            color: @getColor()
             speed: 0.1
             direction: [Math.random(), Math.random()]
         @planes[id] = plane

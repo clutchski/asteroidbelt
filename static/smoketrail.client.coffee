@@ -22,13 +22,44 @@ through which recipients can access the Corresponding Source.
 logger = new wolf.Logger('SmokeTrail')
 
 
-# The engine that controls and renders the world.
-class SmokeTrailEngine extends wolf.Engine
+# An abstract class that will fire game command events based
+# on user input.
+class InputDevice
+
+    @THRUST    : 'thrust'
+    @PORT      : 'post'
+    @STARBOARD : 'starboard'
+    @FIRE      : 'fire'
+
+wolf.extend(InputDevice::, wolf.Events)
+
+# A class to handle user keyboard input.
+class Keyboard extends InputDevice
+
+    constructor : () ->
+        # A mapping of keys to game events.
+        @events =
+            38 : InputDevice.THRUST     # Up
+            37 : InputDevice.PORT       # Left
+            39 : InputDevice.STARBOARD  # Right
+            83 : InputDevice.PORT       # Space
+
+        # Listen for keypresses.
+        @stop()
+        $(document).bind 'keydown', (event) ->
+            key = event.which or event.keyCode
+            event = @events[key]
+            @trigger(event) if event
+
+    stop : () ->
+        $(document).unbind('keydown')
+
+
+class Engine extends wolf.Engine
 
     constructor : () ->
         super('canvas')
         @environment.gravitationalConstant = 0
-        @player = null
         @planes = {}
 
     addPlane : (plane) ->
@@ -77,43 +108,55 @@ class Plane extends wolf.Circle
         super(opts)
 
 
-# Create the engine.
-engine = new SmokeTrailEngine()
+# The controller performs co-ordination between the user, the engine
+# and the network.
+class Controller
 
-# Initialize the socket connection.
-socket = io.connect(window.location)
-if not socket
-    alert "Couldn't make websocket connection!"
-    return
+    constructor : () ->
+        @engine = new Engine()
+        #@inputDevice = new Keyboard()
+        # FIXME: handle no connections
+        @socket = io.connect(window.location)
+        @playerPlane = null
 
-#
-# Set-up network behaviours.
-#
+        @_initializeSocketHandlers()
+        @_initializeUserInputHandlers()
+        @_initializeUpdates()
 
-socket.on 'world.update', (data) ->
-    logger.info("Updating world")
-    for id, planeData of data.planes
-        plane = engine.addPlaneFromData(planeData)
-        if data.playerId == plane.id
-            engine.player = plane
-            setInterval((->
-                data =
-                    id: plane.id
-                    x: plane.x
-                    y: plane.y
-                    speed: plane.speed
-                    direction: [plane.direction.x, plane.direction.y]
-                socket.emit 'plane.update', data
-            ), 200)
+        @engine.start()
 
-socket.on 'plane.added', (data) ->
-    engine.addPlaneFromData(data)
+    _initializeSocketHandlers : () ->
+        logger.info("Initializing socket handlers")
+        @socket.on 'world.update', (data) =>
+            logger.info("Updating world")
+            for id, planeData of data.planes
+                plane = @engine.addPlaneFromData(planeData)
+            @playerPlane = @engine.planes[data.playerId]
 
-socket.on 'plane.update', (data) ->
-    engine.updatePlaneFromData(data)
+        @socket.on 'plane.added', (data) =>
+            @engine.addPlaneFromData(data)
 
-socket.on 'plane.removed', (data) ->
-    engine.removePlane(data.id)
+        @socket.on 'plane.update', (data) =>
+            @engine.updatePlaneFromData(data)
+
+        @socket.on 'plane.removed', (data) =>
+            @engine.removePlane(data.id)
+
+    _initializeUserInputHandlers : () ->
+        logger.info("Initializing user input")
+
+    _initializeUpdates : () ->
+        sendPosition = () =>
+            return if not @playerPlane
+            data =
+                id: @playerPlane.id
+                x: @playerPlane.x
+                y: @playerPlane.y
+                speed: @playerPlane.speed
+                direction: [@playerPlane.direction.x, @playerPlane.direction.y]
+            @socket.emit 'plane.update', data
+        @updateIntervalId = setInterval(sendPosition, 200)
+
 
 # Start 'er up!
-engine.start()
+controller = new Controller()
