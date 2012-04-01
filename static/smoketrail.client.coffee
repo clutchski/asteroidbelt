@@ -46,7 +46,7 @@ class Keyboard extends InputDevice
 
         # Listen for keypresses.
         @stop()
-        $(document).bind 'keydown', (event) ->
+        $(document).bind 'keydown', (event) =>
             key = event.which or event.keyCode
             event = @events[key]
             @trigger(event) if event
@@ -102,10 +102,39 @@ class Plane extends wolf.Circle
             y: 50
             radius: 10
             speed: 0.01
-            dragCoefficient:0
+            dragCoefficient: 0.5
             fillStyle: 'black'
             direction: new wolf.Vector(1, 0)
         super(opts)
+
+    thrust : () ->
+        impulse = @direction.scale(0.6)
+        @applyImpulse(impulse)
+
+    # Turn the ship to the starboard side.
+    starboard : () ->
+        @turn(-1)
+
+    # Turn the ship to the port side.
+    port : () ->
+        @turn(1)
+
+    # Turn the ship in the given direction.
+    turn : (orientation) ->
+        # HACK! Do rotational forces!
+        magnitude = 20
+
+        doTurn = () =>
+            turn = 5
+            if 0 < magnitude
+                degrees = turn * orientation
+                @rotate(degrees)
+                @direction = @direction.rotate(degrees)
+                setTimeout(doTurn, 40)
+            magnitude -= turn
+
+        doTurn()
+
 
 
 # The controller performs co-ordination between the user, the engine
@@ -114,20 +143,19 @@ class Controller
 
     constructor : () ->
         @engine = new Engine()
-        #@inputDevice = new Keyboard()
-        # FIXME: handle no connections
+        @inputDevice = new Keyboard()
         @socket = io.connect(window.location)
         @playerPlane = null
 
+        # Initialize event handlers.
         @_initializeSocketHandlers()
         @_initializeUserInputHandlers()
         @_initializeUpdates()
 
-        @engine.start()
-
     _initializeSocketHandlers : () ->
         logger.info("Initializing socket handlers")
         @socket.on 'world.update', (data) =>
+            @engine.start() if not @engine.isRunning
             logger.info("Updating world")
             for id, planeData of data.planes
                 plane = @engine.addPlaneFromData(planeData)
@@ -145,18 +173,29 @@ class Controller
     _initializeUserInputHandlers : () ->
         logger.info("Initializing user input")
 
-    _initializeUpdates : () ->
-        sendPosition = () =>
-            return if not @playerPlane
-            data =
-                id: @playerPlane.id
-                x: @playerPlane.x
-                y: @playerPlane.y
-                speed: @playerPlane.speed
-                direction: [@playerPlane.direction.x, @playerPlane.direction.y]
-            @socket.emit 'plane.update', data
-        @updateIntervalId = setInterval(sendPosition, 200)
+        @inputDevice.bind InputDevice.THRUST, =>
+            @playerPlane.thrust()
+            @_update()
+
+        @inputDevice.bind InputDevice.PORT, =>
+            @playerPlane.port()
+            @_update()
+
+        @inputDevice.bind InputDevice.STARBOARD, =>
+            @playerPlane.starboard()
+            @_update()
+
+    _update : () ->
+        return if not @playerPlane
+        data =
+            id: @playerPlane.id
+            x: @playerPlane.x
+            y: @playerPlane.y
+            speed: @playerPlane.speed
+            direction: [@playerPlane.direction.x, @playerPlane.direction.y]
+            color: @playerPlane.fillStyle
+        @socket.emit 'plane.update', data
 
 
 # Start 'er up!
-controller = new Controller()
+new Controller()

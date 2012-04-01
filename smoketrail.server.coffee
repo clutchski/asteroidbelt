@@ -31,10 +31,9 @@ app.get '/', (req, res) ->
             </head>
             <body>
                 <canvas id="canvas" width="600" height="600"></canvas>
-
                 <script src="/socket.io/socket.io.js"></script>
+                <script src="/static/jquery-1.7.2.min.js"></script>
                 <script src="/static/wolf.js"></script>
-
                 <script src="/static/smoketrail.client.js"></script>
             </body>
         </html>
@@ -83,7 +82,8 @@ io.sockets.on 'connection', (socket) ->
     socket.emit('world.update', {planes:world.planes, playerId:plane.id})
 
     socket.on 'plane.update', (data) ->
-
+        data.id = socket.id
+        world.updatePlane(data)
         socket.broadcast.emit('plane.update', data)
 
     # Set-up a disconnct handler.
