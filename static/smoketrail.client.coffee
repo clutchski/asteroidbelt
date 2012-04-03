@@ -228,5 +228,16 @@ class Controller
         @socket.emit 'plane.update', @playerPlane.serialize()
 
 
-# Start 'er up!
-new Controller()
+$(document).ready () ->
+
+    # Make the canvas resize as needd.
+    canvas = document.getElementById('canvas')
+    $window = $(window)
+    resizeCanvas = () ->
+        canvas.width = $window.width()
+        canvas.height = $window.height()
+    resizeCanvas()
+    $(window).bind "resize", resizeCanvas
+
+    # Now, start 'er up!
+    new Controller()

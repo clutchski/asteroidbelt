@@ -26,11 +26,11 @@ app.get '/', (req, res) ->
                     body {
                         background-color: #222;
                     }
-
                 </style>
             </head>
             <body>
-                <canvas id="canvas" width="600" height="600"></canvas>
+                <canvas id="canvas" width="800" height="600"></canvas>
+
                 <script src="/socket.io/socket.io.js"></script>
                 <script src="/static/jquery-1.7.2.min.js"></script>
                 <script src="/static/wolf.js"></script>
@@ -100,7 +100,6 @@ io.sockets.on 'connection', (socket) ->
     socket.on 'disconnect', () ->
         world.removePlane socket.id
         socket.broadcast.emit('plane.removed', {id:socket.id})
-
 
 # Run the server.
 app.listen(8008)
