@@ -16,6 +16,8 @@ The asteroids server.
 
   app.use(express.logger());
 
+  io = socketio.listen(app);
+
   app.configure('development', function() {
     return app.use(express.errorHandler({
       dumpExceptions: true,
@@ -24,10 +26,10 @@ The asteroids server.
   });
 
   app.configure('production', function() {
-    return app.use(express.errorHandler());
+    app.use(express.errorHandler());
+    io.set("transports", ["xhr-polling"]);
+    return io.set("polling duration", 10);
   });
-
-  io = socketio.listen(app);
 
   app.get('/', function(req, res) {
     var html;

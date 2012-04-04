@@ -12,15 +12,18 @@ app = express.createServer()
 app.use '/app', express.static(__dirname + '/app')
 app.use express.logger()
 
+# Initialize the socket server.
+io = socketio.listen(app)
+
+
+# Per environment configuration.
 app.configure 'development', () ->
     app.use(express.errorHandler({dumpExceptions: true, showStack: true}))
 
 app.configure 'production', () ->
     app.use(express.errorHandler())
-
-
-# Initialize the socket server.
-io = socketio.listen(app)
+    io.set("transports", ["xhr-polling"])
+    io.set("polling duration", 10)
 
 
 # Return the main page.
