@@ -12,6 +12,13 @@ app = express.createServer()
 app.use '/app', express.static(__dirname + '/app')
 app.use express.logger()
 
+app.configure 'development', () ->
+    app.use(express.errorHandler({dumpExceptions: true, showStack: true}))
+
+app.configure 'production', () ->
+    app.use(express.errorHandler())
+
+
 # Initialize the socket server.
 io = socketio.listen(app)
 
@@ -104,6 +111,5 @@ io.sockets.on 'connection', (socket) ->
         socket.broadcast.emit('plane.removed', {id:socket.id})
 
 # Run the server.
-port = 3000
-console.log "Starting the server on port #{port}"
-app.listen(port)
+app.listen(process.env.PORT || 3000)
+console.log "Listening on %d in %s mode", app.address().port, app.settings.env
