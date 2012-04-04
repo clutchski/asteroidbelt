@@ -1,24 +1,29 @@
 
 ENV['PATH'] = './node_modules/.bin:' + ENV['PATH']
 
+
+def compile(opts='')
+  sh "coffee -c #{opts} app/*.coffee *.coffee"
+end
+
 desc "Compile the source."
 task :watch do
-  sh 'coffee -cw static/*.coffee *.coffee'
+  compile("-w")
 end
 
 task :compile do
-  sh 'coffee -c *.coffee'
+  compile()
 end
 
 desc "Lint the source."
 task :lint do
-  sh 'coffeelint -f coffeelint.json  *.coffee'
+  sh 'coffeelint -f coffeelint.json  *.coffee app/*.coffee'
 end
 
 desc "Run supervisor."
-task :supervisor do
-  sh 'supervisor smoketrail.server.js'
+task :supervisor => [:compile] do
+  sh 'supervisor server.coffee'
 end
 
 
-task :default => :run
+task :default => :supervisor

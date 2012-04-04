@@ -9,7 +9,7 @@ socketio = require 'socket.io'
 
 # Initialize the web server.
 app = express.createServer()
-app.use '/static', express.static(__dirname + '/static')
+app.use '/app', express.static(__dirname + '/app')
 app.use express.logger()
 
 # Initialize the socket server.
@@ -32,9 +32,9 @@ app.get '/', (req, res) ->
                 <canvas id="canvas" width="800" height="600"></canvas>
 
                 <script src="/socket.io/socket.io.js"></script>
-                <script src="/static/jquery-1.7.2.min.js"></script>
-                <script src="/static/wolf.js"></script>
-                <script src="/static/smoketrail.client.js"></script>
+                <script src="/app/vendor/jquery-1.7.2.min.js"></script>
+                <script src="/app/vendor/wolf.js"></script>
+                <script src="/app/smoketrail.js"></script>
             </body>
         </html>
     """
@@ -102,4 +102,4 @@ io.sockets.on 'connection', (socket) ->
         socket.broadcast.emit('plane.removed', {id:socket.id})
 
 # Run the server.
-app.listen(8008)
+app.listen(3000)
