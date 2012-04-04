@@ -1,6 +1,6 @@
-"""
-Smoketrail!
-"""
+###
+The asteroids server.
+###
 
 
 express = require 'express'
@@ -21,7 +21,7 @@ app.get '/', (req, res) ->
     html = """
         <html>
             <head>
-                <title>Smoketrail</title>
+                <title>Asteroids</title>
                 <style type="text/css">
                     body {
                         background-color: #222;
@@ -34,7 +34,7 @@ app.get '/', (req, res) ->
                 <script src="/socket.io/socket.io.js"></script>
                 <script src="/app/vendor/jquery-1.7.2.min.js"></script>
                 <script src="/app/vendor/wolf.js"></script>
-                <script src="/app/smoketrail.js"></script>
+                <script src="/app/asteroids.js"></script>
             </body>
         </html>
     """

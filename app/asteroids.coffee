@@ -1,5 +1,5 @@
 ###
-SmokeTrail
+A clone of the famous asteroids game.
 
 Copyright (C) 2011 Matthew Perpick
 
@@ -19,7 +19,7 @@ through which recipients can access the Corresponding Source.
 ###
 
 
-logger = new wolf.Logger('SmokeTrail')
+logger = new wolf.Logger('asteroids')
 
 
 # An abstract class that will fire game command events based
