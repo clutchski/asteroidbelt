@@ -23,6 +23,9 @@ app.get '/', (req, res) ->
             <head>
                 <title>Asteroids</title>
                 <style type="text/css">
+                    * {
+                        margin:0;
+                    }
                     body {
                         background-color: #222;
                     }
@@ -57,11 +60,10 @@ class World
         console.log ("Creating plane #{id}")
         plane =
             id: id
-            x: Math.round(Math.random() * 100)
-            y: Math.round(Math.random() * 100)
+            x: Math.random() * 500  # FIXME: put a plane where no one will be.
+            y: Math.random() * 500
             color: @getColor()
             speed: 0.1
-            direction: [Math.random(), Math.random()]
         @planes[id] = plane
         return plane
 
@@ -102,4 +104,6 @@ io.sockets.on 'connection', (socket) ->
         socket.broadcast.emit('plane.removed', {id:socket.id})
 
 # Run the server.
-app.listen(3000)
+port = 3000
+console.log "Starting the server on port #{port}"
+app.listen(port)

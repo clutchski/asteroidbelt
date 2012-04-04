@@ -33,6 +33,7 @@ class InputDevice
 
 wolf.extend(InputDevice::, wolf.Events)
 
+
 # A class to handle user keyboard input.
 class Keyboard extends InputDevice
 
@@ -76,6 +77,7 @@ class Engine extends wolf.Engine
         plane.y = data.y
         plane.speed = data.speed
         plane.direction = wolf.Vector.fromArray(data.direction)
+        plane.angle = data.angle
 
     removePlane : (id) ->
         logger.info("Removing plane #{id}")
@@ -91,34 +93,36 @@ class Engine extends wolf.Engine
         plane.y = data.y
         plane.fillStyle = data.color
         plane.speed = data.speed
-        plane.direction = wolf.Vector.fromArray(data.direction)
         @addPlane(plane)
 
 
-class Plane extends wolf.Circle
+class Plane extends wolf.Polygon
 
     constructor : () ->
+        shape  = [[10, 0], [0, -30], [-10, 0]]
         opts =
+            vertices : (new wolf.Point(a, b) for [a, b] in shape)
             x: 50
             y: 50
-            radius: 10
             speed: 0.01
             dragCoefficient: 0.5
             fillStyle: 'black'
-            direction: new wolf.Vector(1, 0)
+            direction: new wolf.Vector(0, -1)
+            angle: 0
         super(opts)
 
     thrust : () ->
         impulse = @direction.scale(0.6)
         @applyImpulse(impulse)
+        @trigger('change')
 
     # Turn the ship to the starboard side.
     starboard : () ->
-        @turn(-1)
+        @turn(1)
 
     # Turn the ship to the port side.
     port : () ->
-        @turn(1)
+        @turn(-1)
 
     # Turn the ship in the given direction.
     turn : (orientation) ->
@@ -132,10 +136,11 @@ class Plane extends wolf.Circle
                 @direction = @direction.rotate(degrees)
                 setTimeout(doTurn, 40)
             magnitude -= turn
+            @trigger('change')
         doTurn()
 
     fire : () ->
-        position = @direction.scale(20).add(new wolf.Vector(@x, @y))
+        position = @direction.add(@getCenter().add(new wolf.Point(10, 50)))
         opts = {
             x: position.x
             y: position.y
@@ -151,6 +156,7 @@ class Plane extends wolf.Circle
         speed: @speed
         fillStyle: @fillStyle
         direction: @direction.toArray()
+        angle: @angle
 
 # Bullets kill things!
 class Bullet extends wolf.Circle
@@ -192,7 +198,9 @@ class Controller
             logger.info("Updating world")
             for id, planeData of data.planes
                 plane = @engine.addPlaneFromData(planeData)
+                console.log plane.getCenter()
             @playerPlane = @engine.planes[data.playerId]
+            @playerPlane.bind 'change', () => @_update()
 
         @socket.on 'plane.added', (data) =>
             @engine.addPlaneFromData(data)
@@ -208,15 +216,12 @@ class Controller
 
         @inputDevice.bind InputDevice.THRUST, =>
             @playerPlane.thrust()
-            @_update()
 
         @inputDevice.bind InputDevice.PORT, =>
             @playerPlane.port()
-            @_update()
 
         @inputDevice.bind InputDevice.STARBOARD, =>
             @playerPlane.starboard()
-            @_update()
 
         @inputDevice.bind InputDevice.FIRE, =>
             bullet = @playerPlane.fire()
