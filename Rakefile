@@ -6,11 +6,12 @@ def compile(opts='')
   sh "coffee -c #{opts} app/*.coffee *.coffee"
 end
 
-desc "Compile the source."
+desc "Compile the source on change."
 task :watch do
   compile("-w")
 end
 
+desc "Compile the source."
 task :compile do
   compile()
 end
@@ -22,8 +23,7 @@ end
 
 desc "Run supervisor."
 task :supervisor => [:compile] do
-  sh 'supervisor server.coffee'
+  sh 'supervisor --watch server.js server.js'
 end
-
 
 task :default => :supervisor
